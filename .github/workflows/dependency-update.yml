@@ -1,0 +1,46 @@
+name: Dependency Update
+
+on:
+  schedule:
+    - cron: '0 0 * * MON'  # Weekly on Monday
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Update dependencies
+        run: |
+          npx npm-check-updates -u
+          npm install
+      
+      - name: Run tests
+        run: |
+          npm run lint
+          npm run test:unit
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies'
+          title: 'Weekly Dependency Updates'
+          body: |
+            ## Weekly dependency updates
+            
+            This PR updates all npm dependencies to their latest versions.
+            
+            ### Checklist
+            - [ ] All tests pass
+            - [ ] No breaking changes identified
+            - [ ] Application builds successfully
+          branch: deps/update
+          delete-branch: true
